@@ -5,6 +5,7 @@ import numpy as np
 from torch.autograd import Function, Variable
 
 from utils_hyp import *
+import PoincareDistance
 
 class PoincareManifold:
 

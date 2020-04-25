@@ -1,4 +1,3 @@
-#!/usr/bin/env/python
 # Copyright (c) Facebook, Inc. and its affiliates.
 # All rights reserved.
 #
@@ -159,4 +158,4 @@ def clamp_min(x, min_value):
 def one_hot_vec(length, pos):
 	vec = [0] * length
 	vec[pos] = 1
-	r
+	return vec
