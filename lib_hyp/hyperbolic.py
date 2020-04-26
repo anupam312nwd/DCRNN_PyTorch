@@ -4,8 +4,8 @@ import torch.nn as nn
 import numpy as np
 from torch.autograd import Function, Variable
 
-from utils_hyp import *
-import PoincareDistance
+# from hyp_utils import *
+
 
 class PoincareManifold:
 
@@ -35,9 +35,6 @@ class PoincareManifold:
         result = (1. + th_dot_u_v + th_norm_v_sq) / (denominator + self.EPS) * u + \
                  (1. - th_norm_u_sq) / (denominator + self.EPS) * v
         return self.normalize(result)
-
-    def distance(self, u, v):
-        return PoincareDistance.apply(u, v, 1e-5)
 
     def lambda_x(self, x):
         """
