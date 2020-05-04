@@ -158,44 +158,32 @@ class DCRNNSupervisor:
         min_val_loss = float('inf')
         wait = 0
         optimizer = torch.optim.Adam(self.dcrnn_model.parameters(), lr=base_lr, eps=epsilon)
-
         lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=steps,
                                                             gamma=lr_decay_ratio)
-
         self._logger.info('Start training ...')
-
         # this will fail if model is loaded with a changed batch_size
         num_batches = self._data['train_loader'].num_batch
         self._logger.info("num_batches:{}".format(num_batches))
-
         batches_seen = num_batches * self._epoch_num
 
         for epoch_num in range(self._epoch_num, epochs):
 
             self.dcrnn_model = self.dcrnn_model.train()
-
             train_iterator = self._data['train_loader'].get_iterator()
             losses = []
-
             start_time = time.time()
 
             for _, (x, y) in enumerate(train_iterator):
                 optimizer.zero_grad()
-
                 x, y = self._prepare_data(x, y)
-
                 output = self.dcrnn_model(x, y, batches_seen)
-
                 if batches_seen == 0:
                     # this is a workaround to accommodate dynamically registered parameters in DCGRUCell
                     optimizer = torch.optim.Adam(self.dcrnn_model.parameters(), lr=base_lr, eps=epsilon)
-
                 loss = self._compute_loss(y, output)
-
                 self._logger.debug(loss.item())
 
                 losses.append(loss.item())
-
                 batches_seen += 1
                 loss.backward()
 
