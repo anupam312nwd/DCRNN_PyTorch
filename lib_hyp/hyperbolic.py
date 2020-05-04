@@ -5,6 +5,7 @@ import numpy as np
 from torch.autograd import Function, Variable
 
 # from hyp_utils import *
+from utils_hyp import *
 
 
 class PoincareManifold:
@@ -109,3 +110,11 @@ class PoincareManifold:
         p_sqnorm = th.sum(p.data ** 2, dim=-1, keepdim=True)
         d_p = d_p * ((1 - p_sqnorm) ** 2 / 4.0).expand_as(d_p)
         return d_p
+
+    def matrix_vec(self, M, v):
+        """matrix operation on a vector in Poincare Ball"""
+        v_column_norm = torch.sqrt(torch.sum(v*v, axis=0))
+        Mv = th.matmul(M, v)/v_column_norm
+        Mv_norm = torch.sqrt(torch.sum(Mv*Mv, axis=0))
+        M_otimes_v = self.tanh((Mv_norm/v_column_norm)*th_atanh(v_column_norm))*(Mv/v_column_norm)
+        return M_otimes_v
