@@ -166,7 +166,7 @@ class DCRNNSupervisor:
         self._logger.info("num_batches:{}".format(num_batches))
         batches_seen = num_batches * self._epoch_num
 
-        for epoch_num in range(self._epoch_num, epochs):
+        for epoch_num in range(self._epoch_num, epochs):  # range(0, 100)
 
             self.dcrnn_model = self.dcrnn_model.train()
             train_iterator = self._data['train_loader'].get_iterator()
