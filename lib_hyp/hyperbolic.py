@@ -4,8 +4,7 @@ import torch.nn as nn
 import numpy as np
 from torch.autograd import Function, Variable
 
-# from hyp_utils import *
-from utils_hyp import *
+from hyperbolic_utils import *
 
 
 class PoincareManifold:
