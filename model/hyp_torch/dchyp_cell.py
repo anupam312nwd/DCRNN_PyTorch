@@ -3,6 +3,7 @@ import torch
 
 from lib import utils
 from lib_hyp import hyperbolic_utils
+from lib_hyp.hyperbolic import PoincareManifold
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -56,6 +57,7 @@ class DCGRUCell(torch.nn.Module):
         self._max_diffusion_step = max_diffusion_step
         self._supports = []
         self._use_gc_for_ru = use_gc_for_ru
+        self._mfd = PoincareManifold()
         supports = []
         if filter_type == "laplacian":
             supports.append(utils.calculate_scaled_laplacian(adj_mx, lambda_max=None))
@@ -91,20 +93,25 @@ class DCGRUCell(torch.nn.Module):
         """
         output_size = 2 * self._num_units
         if self._use_gc_for_ru:  # use graph convolution for reset and update
-            fn = self._gconv
+            fn = self._gconv_hyp
         else:
             fn = self._fc
-        value = torch.sigmoid(fn(inputs, hx, output_size, bias_start=1.0))
+        value = fn(inputs, hx, output_size, bias_start=1.0)
+        value = torch.sigmoid(self._mfd.log_map_zero(value))
         value = torch.reshape(value, (-1, self._num_nodes, output_size))
         r, u = torch.split(tensor=value, split_size_or_sections=self._num_units, dim=-1)
         r = torch.reshape(r, (-1, self._num_nodes * self._num_units))
         u = torch.reshape(u, (-1, self._num_nodes * self._num_units))
+        # {r/u/hx/c}.shape=[64, 13248], inputs.shape=[64, 414]
 
-        c = self._gconv(inputs, r * hx, self._num_units)
+        c = self._gconv_hyp(inputs, r * hx, self._num_units)
+        c = self._mfd.log_map_zero(c)
         if self._activation is not None:
             c = self._activation(c)
 
-        new_state = u * hx + (1.0 - u) * c
+        # new_state = u * hx + (1.0 - u) * c
+        minus_c_plus_h = self._mfd.mob_add(-c, h)
+        new_state = self._mfd.mob_add(c, self._mfd.matrix_vec_stack(u, minus_c_plus_h))
         return new_state
 
     @staticmethod
@@ -198,10 +205,11 @@ class DCGRUCell(torch.nn.Module):
 
         weights = self._gconv_params.get_weights((input_size * num_matrices, output_size))
         # x.shape=[13248, 640], weights.shape=[640, 128], 13248: hidden_size
-        x = torch.matmul(x, weights)  # (batch_size * self._num_nodes, output_size) [13248, 128]
-        # x =
+        # x = torch.matmul(x, weights)  # (batch_size * self._num_nodes, output_size) [13248, 128]
+        x = self._mfd.matrix_vec_stack(weights.T, x.T)
 
         biases = self._gconv_params.get_biases(output_size, bias_start)
-        x += biases
+        # x += biases
+        x = self._mfd.mob_add(x, biases)
         # Reshape res back to 2D: (batch_size, num_node, state_dim) -> (batch_size, num_node * state_dim)
         return torch.reshape(x, [batch_size, self._num_nodes * output_size])
