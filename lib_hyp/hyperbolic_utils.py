@@ -9,8 +9,8 @@ import torch as th
 import torch.optim as optim
 import numpy as np
 import random
-from optimizer.ramsgrad import RiemannianAMSGrad
-from optimizer.rsgd import RiemannianSGD
+from .optimizer.ramsgrad import RiemannianAMSGrad
+from .optimizer.rsgd import RiemannianSGD
 import math
 import subprocess
 
@@ -63,7 +63,7 @@ def load_model_weights(model, path):
     model.load_state_dict(th.load(path))
 
 def th_atanh(x, EPS):
-    values = th.min(x, th.Tensor([1.0 - EPS]).cuda())
+    values = th.min(x, th.Tensor([1.0 - EPS]))
     return 0.5 * (th.log(1 + values + EPS) - th.log(1 - values + EPS))
 
 def th_norm(x, dim=1):

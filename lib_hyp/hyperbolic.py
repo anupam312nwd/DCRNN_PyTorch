@@ -4,12 +4,12 @@ import torch.nn as nn
 import numpy as np
 from torch.autograd import Function, Variable
 
-from hyperbolic_utils import *
+from .hyperbolic_utils import *
 
 
 class PoincareManifold:
 
-    def __init__(self, args, logger, EPS=1e-5, PROJ_EPS=1e-5):
+    def __init__(self, args=0, logger=0, EPS=1e-5, PROJ_EPS=1e-5):
         self.args = args
         self.logger = logger
         self.EPS = EPS
