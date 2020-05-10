@@ -112,17 +112,17 @@ class PoincareManifold:
 
     def matrix_vec(self, M, v):
         """matrix operation on a vector in Poincare Ball"""
-        v_column_norm = torch.sqrt(torch.sum(v*v, axis=0))
+        v_column_norm = th.sqrt(th.sum(v*v, axis=0))
         Mv = th.matmul(M, v)/v_column_norm
-        Mv_norm = torch.sqrt(torch.sum(Mv*Mv, axis=0))
+        Mv_norm = th.sqrt(th.sum(Mv*Mv, axis=0))
         M_otimes_v = self.tanh((Mv_norm/v_column_norm)*th_atanh(v_column_norm))*(Mv/v_column_norm)
         return M_otimes_v
 
     def matrix_vec_stack(self, M, X):
         """matrix operation on a stack of hyperbolic vectors"""
         MX = th.matmul(M, X)
-        MX_norm = torch.norm(MX, dim=0, keepdim=True)
-        X_norm = torch.norm(X, dim=0, keepdim=True)
+        MX_norm = th.norm(MX, dim=0, keepdim=True)
+        X_norm = th.norm(X, dim=0, keepdim=True)
         MX_over_X = MX_norm/X_norm
-        M_otimes_X = torch.mul(mfd.tanh(torch.mul(MX_over_X, th_atanh(X_norm, 1e-4))), MX/MX_norm)
+        M_otimes_X = th.mul(self.tanh(th.mul(MX_over_X, th_atanh(X_norm, 1e-4))), MX/MX_norm)
         return M_otimes_X
