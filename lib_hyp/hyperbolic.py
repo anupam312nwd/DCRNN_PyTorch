@@ -123,6 +123,20 @@ class PoincareManifold:
         MX = th.matmul(M, X)
         MX_norm = th.norm(MX, dim=0, keepdim=True)
         X_norm = th.norm(X, dim=0, keepdim=True)
+        abs_max = abs(max([X_norm.max(), X_norm.min()], key=abs)) + 1e-4
         MX_over_X = MX_norm/X_norm
         M_otimes_X = th.mul(self.tanh(th.mul(MX_over_X, th_atanh(X_norm, 1e-4))), MX/MX_norm)
         return M_otimes_X
+
+    def diag_matrix_vec_stack(self, M, X):
+        """diag_vec matrix operation on hyperbolic vector
+        M:= stack of vec of which diag(vec) to be considered
+        X:= stack of hyperbolic vectors"""
+        MX = th.mul(M, X)
+        MX_norm = th.norm(MX, dim=1, keepdim=True)
+        X_norm = th.norm(X, dim=1, keepdim=True)
+        MX_over_X = MX_norm/X_norm
+        abs_max = abs(max([X_norm.max(), X_norm.min()], key=abs)) + 1e-4
+        diag_M_otimes_X = th.mul(self.tanh(th.mul(MX_over_X, th_atanh(X_norm, 1e-4))), MX/MX_norm)
+        return diag_M_otimes_X
+

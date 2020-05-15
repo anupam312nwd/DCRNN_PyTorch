@@ -104,14 +104,14 @@ class DCGRUCell(torch.nn.Module):
         u = torch.reshape(u, (-1, self._num_nodes * self._num_units))
         # {r/u/hx/c}.shape=[64, 13248], inputs.shape=[64, 414]
 
-        c = self._gconv_hyp(inputs, r * hx, self._num_units)
-        c = self._mfd.log_map_zero(c)
+        c = self._gconv_hyp(inputs, self._mfd.diag_matrix_vec_stack(r, hx), self._num_units)
+        c = torch.tanh(self._mfd.log_map_zero(c))
         if self._activation is not None:
             c = self._activation(c)
 
         # new_state = u * hx + (1.0 - u) * c
-        minus_c_plus_h = self._mfd.mob_add(-c, h)
-        new_state = self._mfd.mob_add(c, self._mfd.matrix_vec_stack(u, minus_c_plus_h))
+        minus_c_plus_h = self._mfd.mob_add(-c, hx)
+        new_state = self._mfd.mob_add(c, self._mfd.diag_matrix_vec_stack(u, minus_c_plus_h))
         return new_state
 
     @staticmethod
@@ -206,7 +206,10 @@ class DCGRUCell(torch.nn.Module):
         weights = self._gconv_params.get_weights((input_size * num_matrices, output_size))
         # x.shape=[13248, 640], weights.shape=[640, 128], 13248: hidden_size
         # x = torch.matmul(x, weights)  # (batch_size * self._num_nodes, output_size) [13248, 128]
+        abs_max = abs(max([x.max(), x.min()], key=abs)) + 1e-3
+        x = x/abs_max
         x = self._mfd.matrix_vec_stack(weights.T, x.T)
+        x = x.T
 
         biases = self._gconv_params.get_biases(output_size, bias_start)
         # x += biases

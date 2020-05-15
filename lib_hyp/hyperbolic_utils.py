@@ -63,7 +63,7 @@ def load_model_weights(model, path):
     model.load_state_dict(th.load(path))
 
 def th_atanh(x, EPS):
-    values = th.min(x, th.Tensor([1.0 - EPS]))
+    values = th.min(x, th.Tensor([1.0 - EPS]).cuda())
     return 0.5 * (th.log(1 + values + EPS) - th.log(1 - values + EPS))
 
 def th_norm(x, dim=1):
@@ -76,7 +76,7 @@ def th_norm(x, dim=1):
     return th.norm(x, 2, dim, keepdim=True)
 
 def th_dot(x, y, keepdim=True):
-    return th.sum(x * y, dim=1, keepdim=keepdim)
+    return th.sum(x * y, dim=0, keepdim=keepdim)
 
 def clip_by_norm(x, clip_norm):
     return th.renorm(x, 2, 0, clip_norm)
